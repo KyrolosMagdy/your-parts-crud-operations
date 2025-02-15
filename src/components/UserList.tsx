@@ -43,9 +43,10 @@ export default function UserList() {
     <div>
       <div className="mb-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold">Users</h1>
-        <div>
+        <div className="flex items-center">
           <Link
             href="/users/new"
+            style={{ color: "white" }}
             className="bg-blue-500 text-white px-4 py-2 rounded inline-flex items-center gap-2 mr-2"
           >
             <Plus size={20} /> Create New User

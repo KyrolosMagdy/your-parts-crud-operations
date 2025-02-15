@@ -8,11 +8,13 @@ import { type User, UserService } from "@/services/api";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Snackbar from "./Snackbar";
-
+const phoneRegex = new RegExp(
+  /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
+);
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
-  phone: z.string().min(1, "Phone is required"),
+  phone: z.string().regex(phoneRegex, "Invalid Number!"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -130,6 +132,7 @@ export default function UserForm({ user }: UserFormProps) {
           </label>
           <input
             id="phone"
+            rel="tel"
             {...register("phone")}
             className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -139,6 +142,7 @@ export default function UserForm({ user }: UserFormProps) {
         </div>
         <button
           type="submit"
+          style={{ color: "white" }}
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           {user ? "Update User" : "Create User"}
