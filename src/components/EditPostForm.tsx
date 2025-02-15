@@ -1,26 +1,36 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import PostForm from "@/components/PostForm";
-import { PostService, type Post } from "@/services/api";
+import type { Post } from "@/services/api";
+import usePostsStore from "@/store/usePostsStore";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { warningMessage } from "@/utils/constants";
 
 interface EditPostFormProps {
-  initialPost: Post;
+  postId: string;
 }
 
-export default function EditPostForm({ initialPost }: EditPostFormProps) {
-  const {
-    data: post,
-    isLoading,
-    error,
-  } = useQuery<Post>({
-    queryKey: ["post", initialPost.id],
-    queryFn: () => PostService.getPost(initialPost.id).then((res) => res.data),
-    initialData: initialPost,
-  });
+export default function EditPostForm({ postId }: EditPostFormProps) {
+  const router = useRouter();
+  const { setFailureMessage } = usePostsStore();
+  const queryClient = useQueryClient();
 
-  if (isLoading) return <div>Loading post...</div>;
-  if (error) return <div>Error loading post</div>;
-  if (!post) return null;
+  const posts = queryClient.getQueryData<Post[]>(["posts"]);
+  const post = posts?.find((p) => p.id === Number(postId));
+
+  if (!posts) {
+    setFailureMessage(
+      "Error: Your post was not found, please try again. " + warningMessage
+    );
+    router.push("/posts");
+  }
+  if (!post) {
+    setFailureMessage("Error: Your post was not found, please try again.");
+    router.push("/posts/new");
+  }
 
   return <PostForm post={post} />;
 }

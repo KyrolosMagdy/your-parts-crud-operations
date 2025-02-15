@@ -19,8 +19,7 @@ export interface User {
 }
 
 export const PostService = {
-  getPosts: (page = 1, limit = 10) =>
-    api.get<Post[]>(`/posts?_page=${page}&_limit=${limit}`),
+  getPosts: () => api.get<Post[]>(`/posts`),
   getPost: (id: number) => api.get<Post>(`/posts/${id}`),
   createPost: (post: Omit<Post, "id">) => api.post<Post>("/posts", post),
   updatePost: (post: Post) => api.put<Post>(`/posts/${post.id}`, post),

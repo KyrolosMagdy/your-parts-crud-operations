@@ -13,17 +13,20 @@ export default function PostsPage() {
     setSuccessMessage,
     setFailureMessage,
   } = usePostsStore();
+  console.log({ successMessage });
   return (
     <div className="container mx-auto p-4">
       {successMessage && (
         <Snackbar
           message={successMessage}
+          type="success"
           isVisible={true}
           onClose={() => setSuccessMessage("")}
         />
       )}
       {failureMessage && (
         <Snackbar
+          type="error"
           message={failureMessage}
           isVisible={true}
           onClose={() => setFailureMessage("")}

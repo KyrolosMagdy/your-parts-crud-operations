@@ -7,8 +7,10 @@ import { z } from "zod";
 import { type Post, PostService, UserService, type User } from "@/services/api";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import usePostsStore from "@/store/usePostsStore";
+import Snackbar from "./Snackbar";
 import LoadingComponent from "./LoadingSpinner";
+import usePostsStore from "@/store/usePostsStore";
+import { warningMessage } from "@/utils/constants";
 
 const schema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -22,83 +24,25 @@ interface PostFormProps {
   post?: Post;
 }
 
+type MutationContext = {
+  previousPosts?: Post[];
+};
+
 export default function PostForm({ post }: PostFormProps) {
   const router = useRouter();
   const [userSearch, setUserSearch] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const queryClient = useQueryClient();
-  const { setSuccessMessage, toggleIsLoading, isLoading } = usePostsStore();
 
-  const { data: users } = useQuery<User[]>({
+  const { setSuccessMessage, setFailureMessage, failureMessage } =
+    usePostsStore();
+
+  const { data: usersData, isLoading: isLoadingUsers } = useQuery<User[]>({
     queryKey: ["users"],
     queryFn: () => UserService.getUsers().then((res) => res.data),
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: PostService.updatePost,
-    onMutate: async (newPost) => {
-      await queryClient.cancelQueries({ queryKey: ["posts"] });
-      await queryClient.cancelQueries({ queryKey: ["post", newPost.id] });
-
-      const previousPosts = queryClient.getQueryData(["posts"]);
-      const previousPost = queryClient.getQueryData(["post", newPost.id]);
-
-      // Update the posts list
-      queryClient.setQueryData(["posts"], (old: any) => {
-        if (!old) return { pages: [], pageParams: [] };
-        return {
-          ...old,
-          pages: old.pages.map((page: Post[]) =>
-            page.map((post) => (post.id === newPost.id ? newPost : post))
-          ),
-        };
-      });
-
-      // Update the individual post
-      queryClient.setQueryData(["post", newPost.id], newPost);
-
-      return { previousPosts, previousPost };
-    },
-    onError: (err, newPost, context) => {
-      queryClient.setQueryData(["posts"], context?.previousPosts);
-      queryClient.setQueryData(["post", newPost.id], context?.previousPost);
-    },
-    onSuccess: (updatedPost) => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      setShowSnackbar(true);
-    },
-  });
-
-  const createMutation = useMutation({
-    mutationFn: PostService.createPost,
-    onMutate: async (newPost) => {
-      await queryClient.cancelQueries({ queryKey: ["posts"] });
-
-      const previousPosts = queryClient.getQueryData(["posts"]);
-
-      // Add the new post to the list
-      queryClient.setQueryData(["posts"], (old: any) => {
-        if (!old)
-          return { pages: [[{ id: Date.now(), ...newPost }]], pageParams: [1] };
-        return {
-          ...old,
-          pages: [
-            [{ id: Date.now(), ...newPost }, ...old.pages[0]],
-            ...old.pages.slice(1),
-          ],
-        };
-      });
-
-      return { previousPosts };
-    },
-    onError: (err, variables, context) => {
-      queryClient.setQueryData(["posts"], context?.previousPosts);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      setShowSnackbar(true);
-    },
+    staleTime: Number.POSITIVE_INFINITY, // Prevent automatic refetching
   });
 
   const {
@@ -115,52 +59,119 @@ export default function PostForm({ post }: PostFormProps) {
   const watchUserId = watch("userId");
 
   useEffect(() => {
-    if (watchUserId) {
-      const user = users?.find((u) => u.id === watchUserId);
+    if (watchUserId && usersData) {
+      const user = usersData.find((u) => u.id === watchUserId);
       if (user) {
         setUserSearch(user.name);
       }
     }
-  }, [watchUserId, users]);
+  }, [watchUserId, usersData]);
 
-  const filteredUsers = users?.filter((user) =>
-    user.name.toLowerCase().includes(userSearch.toLowerCase())
-  );
+  const updateMutation = useMutation<Post, Error, Post, MutationContext>({
+    mutationFn: async (updatedPost: Post) => {
+      const response = await PostService.updatePost(updatedPost);
+      return response.data;
+    },
+    onMutate: async (newPost) => {
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+      const previousPosts = queryClient.getQueryData<Post[]>(["posts"]);
+      queryClient.setQueryData<Post[]>(["posts"], (old) =>
+        old
+          ? old.map((post) => (post.id === newPost.id ? newPost : post))
+          : [newPost]
+      );
+      return { previousPosts };
+    },
+    onError: (err, newPost, context) => {
+      if (context?.previousPosts) {
+        queryClient.setQueryData<Post[]>(["posts"], context.previousPosts);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+
+  const createMutation = useMutation<Post, Error, FormData, MutationContext>({
+    mutationFn: async (newPost: FormData) => {
+      const response = await PostService.createPost(newPost);
+      return response.data;
+    },
+    onMutate: async (newPost) => {
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+      const previousPosts = queryClient.getQueryData<Post[]>(["posts"]);
+      queryClient.setQueryData<Post[]>(["posts"], (old) =>
+        old
+          ? [{ ...newPost, id: Date.now() }, ...old]
+          : [{ ...newPost, id: Date.now() }]
+      );
+      return { previousPosts };
+    },
+    onError: (err, newPost, context) => {
+      if (context?.previousPosts) {
+        queryClient.setQueryData<Post[]>(["posts"], context.previousPosts);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
 
   const onSubmit = async (data: FormData) => {
+    setIsSaving(true);
     try {
-      toggleIsLoading(true);
       if (post) {
-        await updateMutation.mutateAsync({ ...data, id: post.id });
-        setSuccessMessage(
-          post
-            ? "Post updated successfully!, Please note: the server wont actually save the post, everytime you refresh this update will be removed"
-            : "Post created successfully!, Please note: the server wont actually save the post, everytime you refresh this update will be removed"
+        const updatedPost = await updateMutation.mutateAsync({
+          ...data,
+          id: post.id,
+        });
+        queryClient.setQueryData<Post>(
+          ["post", post.id.toString()],
+          updatedPost
         );
       } else {
-        await createMutation.mutateAsync(data);
-        setSuccessMessage(
-          post
-            ? "Post updated successfully!, Please note: the server wont actually save the post, everytime you refresh this update will be removed"
-            : "Post created successfully!, Please note: the server wont actually save the post, everytime you refresh this update will be removed"
+        const createdPost = await createMutation.mutateAsync(data);
+        queryClient.setQueryData<Post>(
+          ["post", createdPost.id.toString()],
+          createdPost
         );
       }
+      setSuccessMessage("Post saved Successfully, " + warningMessage);
       router.push("/posts");
     } catch (error) {
       console.error("Error saving post:", error);
+      setFailureMessage("Error saving post, Please try again later");
     } finally {
-      toggleIsLoading(false);
+      setIsSaving(false);
     }
   };
 
+  const filteredUsers = usersData
+    ? usersData.filter((user) =>
+        user.name.toLowerCase().includes(userSearch.toLowerCase())
+      )
+    : [];
+
+  if (isLoadingUsers) return <LoadingComponent isLoading />;
+
   return (
-    <div className="flex justify-start p-4 items-center border rounded-2xl py-8">
+    <div className="flex justify-start p-4 items-center rounded-xl py-8 border">
+      {isSaving && <LoadingComponent isLoading />}
+      {failureMessage && (
+        <Snackbar
+          type="error"
+          message={failureMessage}
+          isVisible={true}
+          onClose={() => {
+            setFailureMessage("");
+          }}
+        />
+      )}
       <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-2xl">
         <div className="mb-4">
           <label htmlFor="title" className="block mb-1 font-medium">
             Title
           </label>
-          <LoadingComponent isLoading={isLoading} />
           <input
             id="title"
             {...register("title")}
@@ -196,10 +207,11 @@ export default function PostForm({ post }: PostFormProps) {
               setShowDropdown(true);
             }}
             onFocus={() => setShowDropdown(true)}
+            onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
             className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Search for a user..."
           />
-          {showDropdown && filteredUsers && filteredUsers.length > 0 && (
+          {showDropdown && filteredUsers.length > 0 && (
             <ul
               className="absolute z-10 w-full bg-white border rounded mt-1 max-h-60 overflow-auto"
               style={{ backgroundColor: "white" }}
@@ -208,7 +220,8 @@ export default function PostForm({ post }: PostFormProps) {
                 <li
                   key={user.id}
                   className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => {
+                  onMouseDown={(e) => {
+                    e.preventDefault();
                     setValue("userId", user.id);
                     setUserSearch(user.name);
                     setShowDropdown(false);
@@ -229,12 +242,19 @@ export default function PostForm({ post }: PostFormProps) {
         </div>
         <button
           type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring:blue-500 focus:ring-offset-2"
           style={{ color: "white" }}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           {post ? "Update Post" : "Create Post"}
         </button>
       </form>
+      <Snackbar
+        message={
+          post ? "Post updated successfully!" : "Post created successfully!"
+        }
+        isVisible={showSnackbar}
+        onClose={() => setShowSnackbar(false)}
+      />
     </div>
   );
 }
