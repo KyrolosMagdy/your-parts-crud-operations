@@ -7,7 +7,7 @@ import { z } from "zod";
 import { type User, UserService } from "@/services/api";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import Snackbar from "./Snackbar";
+import Snackbar from "./snackbar";
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
 );

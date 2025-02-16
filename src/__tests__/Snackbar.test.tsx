@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
-import Snackbar from "../components/Snackbar";
+import Snackbar from "../components/snackbar";
 
 // Mock the Lucide icon
 vi.mock("lucide-react", () => ({

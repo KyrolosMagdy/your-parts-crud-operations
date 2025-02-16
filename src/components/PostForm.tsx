@@ -7,7 +7,7 @@ import { z } from "zod";
 import { type Post, PostService, UserService, type User } from "@/services/api";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Snackbar from "./Snackbar";
+import Snackbar from "./snackbar";
 import LoadingComponent from "./LoadingSpinner";
 import usePostsStore from "@/store/usePostsStore";
 import { warningMessage } from "@/utils/constants";

@@ -2,7 +2,7 @@
 
 import FullPageSpinner from "@/components/LoadingSpinner";
 import PostList from "@/components/postsList";
-import Snackbar from "../../components/Snackbar";
+import Snackbar from "../../components/snackbar";
 import usePostsStore from "@/store/usePostsStore";
 
 export default function PostsPage() {
