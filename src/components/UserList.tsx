@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { UserService, type User } from "@/services/api";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { UserCard } from "./UserCard";
 
 export default function UserList() {
   const queryClient = useQueryClient();
@@ -40,7 +41,7 @@ export default function UserList() {
   if (status === "error") return <div>Error loading users</div>;
 
   return (
-    <div>
+    <div className="">
       <div className="mb-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold">Users</h1>
         <div className="flex items-center">
@@ -59,29 +60,13 @@ export default function UserList() {
           </button>
         </div>
       </div>
-      <ul className="flex w-full flex-col items-center gap-4">
-        {users?.map((user: User) => (
-          <li key={user.id} className="border p-4 w-1/2 rounded-xl">
-            <h2 className="text-xl font-semibold">{user.name}</h2>
-            <p className="mt-2">{user.email}</p>
-            <p>{user.phone}</p>
-            <div className="mt-4 flex w-full justify-between">
-              <Link
-                href={`/users/${user.id}/edit`}
-                className="text-green-500 hover:underline inline-flex items-center"
-              >
-                <Pencil size={16} className="mr-1" /> Edit
-              </Link>
-              <button
-                onClick={() => handleDelete(user.id)}
-                className="text-red-500 hover:underline inline-flex items-center"
-              >
-                <Trash2 size={16} className="mr-1" /> Delete
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <div className="flex justify-center w-full">
+        <ul className="grid grid-cols-1 gap-4 items-center w-full max-w-2xl">
+          {users?.map((user: User) => (
+            <UserCard key={user.id} user={user} handleDelete={handleDelete} />
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

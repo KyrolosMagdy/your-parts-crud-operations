@@ -8,6 +8,7 @@ import { PostService, type Post } from "@/services/api";
 import { Trash2, Pencil, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import LoadingComponent from "./LoadingSpinner";
 import Pagination from "./Pagination";
+import { PostCard } from "./PostCard";
 
 const CONTENT_THRESHOLD = 200;
 const POSTS_PER_PAGE = 5;
@@ -104,50 +105,15 @@ export default function PostList() {
       <div className="flex justify-center">
         <ul className="grid grid-cols-1 gap-4 items-center w-full max-w-2xl">
           {paginatedPosts.map((post: Post, index: number) => (
-            <li
+            <PostCard
               key={post.id}
-              className={`border p-4 rounded cursor-pointer w-full hover:shadow-md transition-all duration-300 flex flex-col justify-between ${
-                index % 2 === 0 ? "bg-white" : "bg-gray-50"
-              }`}
-              onClick={() => needsExpansion(post.body) && toggleExpand(post.id)}
-            >
-              <div>
-                <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-semibold">{post.title}</h2>
-                  {needsExpansion(post.body) &&
-                    (expandedPost === post.id ? (
-                      <ChevronUp size={20} />
-                    ) : (
-                      <ChevronDown size={20} />
-                    ))}
-                </div>
-                <p
-                  className={`mt-2 ${
-                    needsExpansion(post.body) && expandedPost !== post.id
-                      ? "line-clamp-2"
-                      : ""
-                  }`}
-                >
-                  {post.body}
-                </p>
-              </div>
-
-              <div className="mt-4 space-x-2 flex gap-2 justify-between w-full bottom-2">
-                <button
-                  onClick={(e) => handleDelete(post.id, e)}
-                  className="text-red-500 hover:underline flex items-center gap-1"
-                >
-                  <Trash2 size={16} /> Delete
-                </button>
-                <Link
-                  href={`/posts/${post.id}/edit`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-green-500 hover:underline flex items-center gap-1"
-                >
-                  <Pencil size={16} /> Edit
-                </Link>
-              </div>
-            </li>
+              post={post}
+              index={index}
+              needsExpansion={needsExpansion}
+              toggleExpand={toggleExpand}
+              expandedPost={expandedPost}
+              handleDelete={handleDelete}
+            />
           ))}
         </ul>
       </div>
