@@ -5,7 +5,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { PostService, type Post } from "@/services/api";
-import { Trash2, Pencil, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus } from "lucide-react";
 import LoadingComponent from "./LoadingSpinner";
 import Pagination from "./Pagination";
 import { PostCard } from "./PostCard";

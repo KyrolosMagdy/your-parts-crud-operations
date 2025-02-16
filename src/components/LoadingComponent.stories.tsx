@@ -29,7 +29,6 @@ export const LoadingWithContent: Story = {
     isLoading: true,
   },
   decorators: [
-    // @ts-ignore
     (Story) => (
       <div>
         <h1 className="text-2xl font-bold mb-4">Page Content</h1>

@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import PostForm from "@/components/PostForm";
-import type { Post } from "@/services/api";
-import usePostsStore from "@/store/usePostsStore";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import { warningMessage } from "@/utils/constants";
+import PostForm from "../components/PostForm";
+import type { Post } from "../services/api";
+import usePostsStore from "../store/usePostsStore";
+import { warningMessage } from "../utils/constants";
 
 interface EditPostFormProps {
   postId: string;

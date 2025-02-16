@@ -59,24 +59,6 @@ export default function UserForm({ user }: UserFormProps) {
     },
   });
 
-  const createMutation = useMutation<User, Error, FormData>({
-    mutationFn: async (data: FormData) => {
-      const response = await UserService.createUser(data);
-      return response.data;
-    },
-    onSuccess: (createdUser) => {
-      queryClient.setQueryData<User[]>(["users"], (oldUsers) => {
-        if (!oldUsers) return [createdUser];
-        return [...oldUsers, createdUser];
-      });
-      queryClient.setQueryData(
-        ["user", createdUser.id.toString()],
-        createdUser
-      );
-      setShowSnackbar(true);
-    },
-  });
-
   const onSubmit = async (data: FormData) => {
     try {
       if (user) {

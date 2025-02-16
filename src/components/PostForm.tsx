@@ -200,6 +200,7 @@ export default function PostForm({ post }: PostFormProps) {
             User
           </label>
           <input
+            id="userId"
             type="text"
             value={userSearch}
             onChange={(e) => {

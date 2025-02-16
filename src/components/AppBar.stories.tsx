@@ -3,11 +3,9 @@ import type { Meta, StoryObj } from "@storybook/react";
 import AppBar from "./AppBar";
 import { within, userEvent } from "@storybook/testing-library";
 import mockRouter from "next-router-mock";
-import type { NextRouter } from "next/router";
 
 // Create a custom wrapper to provide the mocked router
 const RouterWrapper = ({ children }: { children: React.ReactNode }) => {
-  const router = mockRouter as unknown as NextRouter;
   return <>{children}</>;
 };
 
