@@ -1,4 +1,5 @@
 import { Post } from "@/services/api";
+import usePostsStore from "@/store/usePostsStore";
 import { ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 
@@ -17,6 +18,7 @@ export const PostCard = ({
   expandedPost: number | null;
   handleDelete: (id: number, e: React.MouseEvent<HTMLButtonElement>) => void;
 }) => {
+  const { setSelectedPostId } = usePostsStore();
   return (
     <li
       key={post.id}
@@ -55,7 +57,10 @@ export const PostCard = ({
         </button>
         <Link
           href={`/posts/${post.id}/edit`}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedPostId(post.id);
+          }}
           className="text-green-500 hover:underline flex items-center gap-1"
         >
           <Pencil size={16} /> Edit
