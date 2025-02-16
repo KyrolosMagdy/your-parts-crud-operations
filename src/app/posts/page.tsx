@@ -2,7 +2,7 @@
 
 import FullPageSpinner from "@/components/LoadingSpinner";
 import PostList from "@/components/postsList";
-import Snackbar from "@/components/Snackbar";
+import Snackbar from "../../components/Snackbar";
 import usePostsStore from "@/store/usePostsStore";
 
 export default function PostsPage() {
@@ -13,7 +13,6 @@ export default function PostsPage() {
     setSuccessMessage,
     setFailureMessage,
   } = usePostsStore();
-  console.log({ successMessage });
   return (
     <div className="container mx-auto p-4">
       {successMessage && (
